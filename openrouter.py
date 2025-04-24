@@ -32,9 +32,9 @@ logger = logging.getLogger(__name__)
 class Filter:
     class Valves(BaseModel):
         order: List[str] = Field(
-            default=None,
+            default=[],
             description="A prioritized list of provider names to try in order. \
-                (e.g. [\"Anthropic\", \"OpenAI\"])",
+                (e.g. Anthropic,OpenAI)",
         )
         allow_fallbacks: bool = Field(
             default=True, 
@@ -51,14 +51,14 @@ class Filter:
             description="Control whether to use providers that may store data. \
                 Defaults to \"allow\".",
         )
-        ignore: Optional[List[str]] = Field(
+        ignore: List[str] = Field(
             default=None,
             description="List of provider names to skip for this request.",
         )
-        quantizations: Optional[List[str]] = Field(
-            default=None,
+        quantizations: List[str] = Field(
+            default=[],
             description="List of quantization levels to filter by \
-                (e.g., ['int4', 'int8']).",
+                (e.g., int4,int8).",
         )
         sort: Optional[Literal["price", "throughput", "latency"]] = Field(
             default=None,
@@ -74,8 +74,18 @@ class Filter:
             exclude_defaults=True
         )
 
-        if config:
-            body["provider"] = config
-            logger.info(f"using provider config: {config}")
+        if not config:
+            return body
+        
+        for key in ['order', 'quantizations']:
+            config = self._handle_optional_list(config, key)
+        
+        body["provider"] = config
+        logger.info(f"using provider config: {config}")
         
         return body
+    
+    def _handle_optional_list(self, config, key):
+        if not config.get(key) or all(s.strip() == '' for s in config[key]):
+            config.pop(key)
+        return config

@@ -52,7 +52,7 @@ class Filter:
                 Defaults to \"allow\".",
         )
         ignore: List[str] = Field(
-            default=None,
+            default=[],
             description="List of provider names to skip for this request.",
         )
         quantizations: List[str] = Field(
@@ -77,7 +77,7 @@ class Filter:
         if not config:
             return body
         
-        for key in ['order', 'quantizations']:
+        for key in ['order', 'ignore', 'quantizations']:
             config = self._handle_optional_list(config, key)
         
         body["provider"] = config
